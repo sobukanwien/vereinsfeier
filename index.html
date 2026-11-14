@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ich bin dabei! – Sobukan Weihnachtsfeier</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Nunito:wght@400;700;800&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#E8293A">
+<style>
+  :root { --red:#E8293A; --dark:#0f0f0f; --card:#1a1a1a; --gold:#F5C842; --text:#f0f0f0; --muted:#888; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body {
+    background: radial-gradient(ellipse at top, #2a0a0a 0%, var(--dark) 60%) fixed;
+    color: var(--text); font-family:'Nunito',sans-serif; min-height:100vh;
+    display:flex; align-items:center; justify-content:center; padding:2rem 1.25rem;
+  }
+  .belt { position:fixed; top:0; left:0; width:100%; height:6px;
+    background:linear-gradient(90deg,var(--red),var(--gold),#2f9e5b); }
+  .wrap { width:100%; max-width:400px; }
+  .head { text-align:center; margin-bottom:1.75rem; }
+  .icon { font-size:56px; filter:drop-shadow(0 0 24px rgba(232,41,58,.5)); }
+  h1 { font-family:'Bebas Neue',cursive; font-size:2.4rem; letter-spacing:3px; line-height:1; margin-top:8px; }
+  .info { color:var(--gold); font-weight:700; margin-top:10px; line-height:1.6; }
+  .card { background:var(--card); border:1px solid #2e2e2e; border-radius:16px; padding:1.75rem 1.5rem; }
+  label { display:block; font-size:.72rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); margin-bottom:8px; }
+  input { width:100%; background:#111; border:1.5px solid #2e2e2e; border-radius:10px; padding:14px 16px;
+    font-size:1rem; font-family:inherit; color:var(--text); outline:none; margin-bottom:1.1rem; transition:border-color .2s; }
+  input:focus { border-color:var(--red); }
+  input.invalid { border-color:var(--red); animation:shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%,75%{transform:translateX(-7px)} 50%{transform:translateX(7px)} }
+  button { width:100%; background:var(--red); color:#fff; border:none; border-radius:10px; padding:15px;
+    font-family:'Bebas Neue',cursive; font-size:1.4rem; letter-spacing:2px; cursor:pointer; transition:background .2s; }
+  button:hover { background:#c0202f; }
+  button:disabled { background:#333; color:var(--muted); cursor:default; }
+  .done { display:none; text-align:center; padding:1rem 0; }
+  .done .big { font-size:52px; }
+  .done h2 { font-family:'Bebas Neue',cursive; font-size:2rem; letter-spacing:2px; margin:8px 0; }
+  .done p { color:var(--muted); line-height:1.6; }
+  .again { background:none; border:1px solid #333; color:var(--muted); font-family:'Nunito',sans-serif;
+    font-size:.9rem; letter-spacing:0; padding:10px; margin-top:1.25rem; }
+  .again:hover { background:none; color:var(--text); }
+</style>
+</head>
+<body>
+<div class="belt"></div>
+
+<div class="wrap">
+  <div class="head">
+    <div class="icon">🎄</div>
+    <h1>Sobukan Weihnachtsfeier</h1>
+    <div class="info">📅 Freitag, 27. November · 18:00 Uhr<br>📍 Siebensternbräu</div>
+  </div>
+
+  <div class="card">
+    <div id="form">
+      <label for="firstname">Vorname</label>
+      <input id="firstname" type="text" autocomplete="given-name" placeholder="Vorname">
+      <label for="lastname">Nachname</label>
+      <input id="lastname" type="text" autocomplete="family-name" placeholder="Nachname">
+      <button id="btn" onclick="send()">🙋 Ich bin dabei!</button>
+    </div>
+
+    <div class="done" id="done">
+      <div class="big">🎉</div>
+      <h2>Super, <span id="who"></span>!</h2>
+      <p>Du bist angemeldet.<br>Wir sehen uns am 27.11. im Siebensternbräu!</p>
+      <button class="again" onclick="reset()">Noch jemanden anmelden</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── HIER die Web-App-URL aus dem Google Apps Script einfügen ──
+const SHEET_URL = "HIER_DIE_WEB_APP_URL_EINFÜGEN";
+
+function send() {
+  const fn = document.getElementById('firstname');
+  const ln = document.getElementById('lastname');
+  let ok = true;
+  [fn, ln].forEach(el => {
+    el.classList.remove('invalid');
+    if (!el.value.trim()) { void el.offsetWidth; el.classList.add('invalid'); ok = false; }
+  });
+  if (!ok) return;
+
+  const btn = document.getElementById('btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Wird gesendet...';
+
+  fetch(SHEET_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'text/plain' },
+    body: JSON.stringify({ firstname: fn.value.trim(), lastname: ln.value.trim() })
+  }).then(() => {
+    document.getElementById('who').textContent = fn.value.trim();
+    document.getElementById('form').style.display = 'none';
+    document.getElementById('done').style.display = 'block';
+  }).catch(() => {
+    alert('Das hat leider nicht geklappt. Bitte prüfe deine Internetverbindung und versuch es nochmal.');
+  }).finally(() => {
+    btn.disabled = false;
+    btn.textContent = '🙋 Ich bin dabei!';
+  });
+}
+
+function reset() {
+  document.getElementById('firstname').value = '';
+  document.getElementById('lastname').value = '';
+  document.getElementById('done').style.display = 'none';
+  document.getElementById('form').style.display = 'block';
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Enter') send(); });
+</script>
+</body>
+</html>
